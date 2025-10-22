@@ -1,54 +1,92 @@
-import { useState } from "react";
-import axios from "axios";
+import { useState, useRef } from "react";
+import { marked } from "marked";
 import "./App.css";
 
 function App() {
-  const [prompt, setPrompt] = useState("");
+  const [input, setInput] = useState("");
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
+  const [typingSpeed, setTypingSpeed] = useState(0);
+  const bufferRef = useRef("");
 
-  const handleSend = async () => {
-    if (!prompt.trim()) return;
+  const handleStream = async () => {
     setLoading(true);
     setResponse("");
+    bufferRef.current = "";
+
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/llm/chat", {
-        prompt: prompt,
+      const res = await fetch("http://127.0.0.1:8000/api/llm/chat/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: input }),
       });
-      setResponse(res.data.response);
-    } catch (err) {
-      console.error(err);
-      setResponse("❌ Request failed. Please check if the backend server is running.");
+
+      if (!res.ok) throw new Error("Network response was not ok");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          const chunk = decoder.decode(value);
+          for (const char of chunk) {
+            bufferRef.current += char;
+            setResponse(marked(bufferRef.current));
+            if (typingSpeed > 0) {
+              await new Promise(resolve => setTimeout(resolve, typingSpeed));
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("❌ Stream error:", error);
+      setResponse("[Error] Failed to fetch stream.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
   return (
-    <div className="container">
-      <h2>💬 Azure GPT Chat Demo</h2>
-      <textarea
-        placeholder="Type your message here..."
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        onKeyDown={handleKeyDown}
-      />
-      <button onClick={handleSend} disabled={loading}>
-        {loading ? "Sending..." : "Send"}
-      </button>
-      {response && (
-        <div className="response-box">
-          <strong>Response:</strong>
-          <div>{response}</div>
-        </div>
-      )}
+    <div className="app-container">
+      <h1>💬 Jimmy GPT</h1>
+
+      <div className="input-container">
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type your prompt..."
+          rows={3}
+        />
+        <button onClick={handleStream} disabled={loading}>
+          {loading ? "Streaming..." : "Send"}
+        </button>
+      </div>
+
+      <div className="speed-control">
+        <label>Typing Speed: {typingSpeed} ms</label>
+        <input
+          type="range"
+          min="0"
+          max="200"
+          step="10"
+          value={typingSpeed}
+          onChange={(e) => setTypingSpeed(Number(e.target.value))}
+        />
+      </div>
+
+      <div className="response-container">
+        {response ? (
+          <div
+            className="markdown-body"
+            dangerouslySetInnerHTML={{ __html: response }}
+          />
+        ) : (
+          <p className="placeholder">Response will appear here...</p>
+        )}
+      </div>
     </div>
   );
 }

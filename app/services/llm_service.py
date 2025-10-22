@@ -1,23 +1,35 @@
 # app/services/llm_service.py
-from app.core.config import settings
-from langchain_openai import AzureChatOpenAI# 如果你用的是 langchain_openai，也行
+from langchain_openai import AzureChatOpenAI
 from langchain_core.messages import HumanMessage
+from app.core.config import settings
 
-
-# 初始化 LLM 客户端
+# Initialize Azure LLM client
 llm = AzureChatOpenAI(
-    openai_api_key=settings.azure_openai_api_key,
+    api_key=settings.azure_openai_api_key,
     azure_endpoint=settings.azure_openai_endpoint,
-    deployment_name=settings.azure_deployment_name,
-    openai_api_version=settings.azure_api_version,
+    model=settings.azure_deployment_name,
+    api_version=settings.azure_api_version,
     temperature=0.7,
 )
 
-# 核心方法
+# 🔹 Non-streaming version (already working)
 async def process_prompt(prompt: str) -> str:
-    """
-    核心方法：把用户 prompt 发给 Azure OpenAI 并返回回复
-    """
     messages = [HumanMessage(content=prompt)]
     response = await llm.ainvoke(messages)
     return response.content
+
+# ✨ Streaming version (typewriter effect)
+async def stream_prompt(prompt: str):
+    """
+    Stream LLM output chunk by chunk (token by token).
+    Used for StreamingResponse in FastAPI.
+    """
+    messages = [HumanMessage(content=prompt)]
+    try:
+        async for chunk in llm.astream(messages):
+            if chunk.content:
+                # NOTE: must yield bytes when using StreamingResponse
+                yield chunk.content.encode("utf-8")
+    except Exception as e:
+        # Optional: log the error here
+        yield f"[Error] {str(e)}".encode("utf-8")
