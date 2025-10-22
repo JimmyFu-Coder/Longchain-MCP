@@ -1,163 +1,102 @@
-/* ========== 全局基础样式 ========== */
-body {
-  background-color: #121212;          /* 黑色背景 */
-  color: #e0e0e0;                     /* 主字体颜色 */
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  min-height: 100vh;
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply flex min-h-screen justify-center items-start bg-neutral-900 text-neutral-200 font-sans m-0 p-0;
+  }
+
+  h1 {
+    @apply text-center text-cyan-400 mb-6 text-3xl font-bold;
+  }
+
+  textarea {
+    @apply w-full p-4 bg-neutral-800 text-white border border-neutral-700 rounded-md resize-none text-base leading-snug whitespace-pre-wrap break-words;
+  }
+
+  button {
+    @apply bg-cyan-400 text-black font-bold py-2 px-4 rounded-md transition-colors duration-200;
+  }
+
+  button:hover:not(:disabled) {
+    @apply bg-cyan-500;
+  }
+
+  button:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
 }
 
-/* ========== 主容器 ========== */
-.app-container {
-  width: 800px;                       /* 固定宽度 */
-  padding: 2rem;
-  box-sizing: border-box;
+@layer components {
+  /* 主容器 */
+  .app-container {
+    @apply w-[800px] p-8 box-border;
+  }
+
+  /* 输入区 */
+  .input-container {
+    @apply flex flex-col gap-2 mb-4;
+  }
+
+  /* 打印速度控制条 */
+  .speed-control {
+    @apply flex flex-col mb-4;
+  }
+
+  .speed-control label {
+    @apply text-sm text-neutral-400 mb-2;
+  }
+
+  .speed-control input[type="range"] {
+    accent-color: #00d8ff; /* Tailwind 目前不支持 accent-color 的 @apply，直接写 */
+  }
+
+  /* 响应区 */
+  .response-container {
+    @apply bg-neutral-800 p-4 min-h-[200px] max-h-[400px] rounded-md whitespace-pre-wrap break-words overflow-y-auto leading-relaxed border border-neutral-700;
+  }
+
+  .placeholder {
+    @apply text-neutral-500 italic;
+  }
+
+  /* 滚动条样式（自定义） */
+  .response-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .response-container::-webkit-scrollbar-track {
+    background: #1e1e1e;
+  }
+
+  .response-container::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+  }
+
+  .response-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  /* Markdown 渲染 */
+  .markdown-body {
+    @apply whitespace-pre-wrap break-words leading-relaxed;
+  }
+
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3 {
+    @apply text-cyan-400 mt-4;
+  }
+
+  .markdown-body ul {
+    @apply pl-5 list-disc;
+  }
+
+  .markdown-body code {
+    @apply bg-neutral-800 text-emerald-400 px-1 rounded font-mono;
+  }
+
+  .markdown-body pre code {
+    @apply block p-4 whitespace-pre-wrap break-words overflow-x-auto;
+  }
 }
-
-/* ========== 标题 ========== */
-h1 {
-  text-align: center;
-  color: #00d8ff;                     /* 亮蓝色 */
-  margin-bottom: 1.5rem;
-}
-
-/* ========== 输入区 ========== */
-.input-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-textarea {
-  width: 100%;
-  padding: 1rem;
-  background: #1e1e1e;
-  color: white;
-  border: 1px solid #333;
-  border-radius: 6px;
-  resize: none;
-  font-size: 16px;
-  line-height: 1.4;
-  white-space: pre-wrap;              /* ✅ 保留换行 */
-  word-wrap: break-word;              /* ✅ 自动换行 */
-}
-
-button {
-  background-color: #00d8ff;
-  color: black;
-  border: none;
-  padding: 0.7rem;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
-}
-
-button:hover:not(:disabled) {
-  background-color: #00b4cc;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ========== 打印速度控制条 ========== */
-.speed-control {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 1rem;
-}
-
-.speed-control label {
-  font-size: 14px;
-  color: #aaa;
-  margin-bottom: 0.5rem;
-}
-
-.speed-control input[type="range"] {
-  width: 100%;
-  accent-color: #00d8ff;             /* 亮蓝色滑块 */
-}
-
-/* ========== 响应区 ========== */
-.response-container {
-  background: #1e1e1e;
-  padding: 1rem;
-  min-height: 200px;
-  max-height: 400px;                 /* ✅ 最大高度，超过就滚动 */
-  border-radius: 6px;
-  white-space: pre-wrap;             /* ✅ 自动换行 */
-  word-wrap: break-word;
-  overflow-y: auto;                  /* ✅ 滚动条 */
-  line-height: 1.6;
-  border: 1px solid #333;
-}
-
-.placeholder {
-  color: #666;
-  font-style: italic;
-}
-
-/* ========== 滚动条样式（可选） ========== */
-.response-container::-webkit-scrollbar {
-  width: 8px;
-}
-
-.response-container::-webkit-scrollbar-track {
-  background: #1e1e1e;
-}
-
-.response-container::-webkit-scrollbar-thumb {
-  background: #444;
-  border-radius: 4px;
-}
-
-.response-container::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-
-.markdown-body {
-  white-space: pre-wrap;         /* ✅ 自动换行 */
-  word-wrap: break-word;         /* ✅ 长词也换行 */
-  line-height: 1.6;
-}
-
-/* Markdown 标题样式 */
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3 {
-  color: #00d8ff;
-  margin-top: 1rem;
-}
-
-/* Markdown 列表 */
-.markdown-body ul {
-  padding-left: 1.2rem;
-}
-
-/* Markdown 代码块 */
-.markdown-body code {
-  background: #2a2a2a;
-  color: #00ff88;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-family: monospace;
-}
-
-/* Markdown 多行代码块 */
-.markdown-body pre code {
-  display: block;
-  padding: 1rem;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-x: auto;
-}
-

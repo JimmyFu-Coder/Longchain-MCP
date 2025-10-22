@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { marked } from "marked";
-import "./App.css";
 
 function App() {
   const [input, setInput] = useState("");
@@ -50,23 +49,34 @@ function App() {
   };
 
   return (
-    <div className="app-container">
-      <h1>💬 Jimmy GPT</h1>
+    <div className="w-[800px] p-8 min-h-screen mx-auto flex flex-col items-center text-neutral-200 bg-neutral-900">
+      <h1 className="text-3xl font-bold text-cyan-400 mb-6 text-center">
+        💬 Jimmy GPT
+      </h1>
 
-      <div className="input-container">
+      {/* 输入区 */}
+      <div className="w-full flex flex-col gap-2 mb-4">
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your prompt..."
           rows={3}
+          className="w-full p-4 bg-neutral-800 text-white border border-neutral-700 rounded-md resize-none text-base leading-snug whitespace-pre-wrap break-words"
         />
-        <button onClick={handleStream} disabled={loading}>
+        <button
+          onClick={handleStream}
+          disabled={loading}
+          className="bg-cyan-400 text-black font-bold py-2 rounded-md transition-colors duration-200 disabled:opacity-50 hover:bg-cyan-500"
+        >
           {loading ? "Streaming..." : "Send"}
         </button>
       </div>
 
-      <div className="speed-control">
-        <label>Typing Speed: {typingSpeed} ms</label>
+      {/* 打印速度控制条 */}
+      <div className="w-full flex flex-col mb-4">
+        <label className="text-sm text-neutral-400 mb-2">
+          Typing Speed: {typingSpeed} ms
+        </label>
         <input
           type="range"
           min="0"
@@ -74,17 +84,21 @@ function App() {
           step="10"
           value={typingSpeed}
           onChange={(e) => setTypingSpeed(Number(e.target.value))}
+          className="accent-cyan-400 w-full"
         />
       </div>
 
-      <div className="response-container">
+      {/* 响应区 */}
+      <div className="w-full bg-neutral-800 p-4 min-h-[200px] max-h-[400px] rounded-md whitespace-pre-wrap break-words overflow-y-auto leading-relaxed border border-neutral-700">
         {response ? (
           <div
-            className="markdown-body"
+            className="prose prose-invert max-w-none"
             dangerouslySetInnerHTML={{ __html: response }}
           />
         ) : (
-          <p className="placeholder">Response will appear here...</p>
+          <p className="text-neutral-500 italic">
+            Response will appear here...
+          </p>
         )}
       </div>
     </div>
@@ -92,4 +106,3 @@ function App() {
 }
 
 export default App;
-
