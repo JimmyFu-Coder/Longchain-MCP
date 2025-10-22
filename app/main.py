@@ -1,7 +1,7 @@
 # app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import llm_routes
+from app.api import llm_routes, file_routes
 
 app = FastAPI(
     title="LongChain Backend",
@@ -13,6 +13,9 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",  # React Vite 默认端口
     "http://127.0.0.1:5173",
+    "http://localhost:3000",  # 如果你也用其他端口
+    "http://127.0.0.1:3000"
+
 ]
 
 app.add_middleware(
@@ -25,6 +28,7 @@ app.add_middleware(
 
 # 注册路由
 app.include_router(llm_routes.router, prefix="/api/llm", tags=["LLM"])
+app.include_router(file_routes.router, prefix="/api/files", tags=["Files"])
 
 @app.get("/")
 def health_check():

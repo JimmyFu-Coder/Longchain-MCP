@@ -3,6 +3,7 @@ from langchain_openai import AzureChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.callbacks import get_openai_callback
 from app.core.config import settings
+from app.services.rag_service import rag_service
 from typing import List, Dict, Any
 import tiktoken
 
@@ -38,10 +39,19 @@ def count_tokens_for_messages(messages: List[HumanMessage | AIMessage], model: s
     total_tokens += 2
     return total_tokens
 
-# 🔹 Non-streaming version (already working)
-async def process_prompt(prompt: str) -> Dict[str, Any]:
+# 🔹 Non-streaming version with RAG support
+async def process_prompt(prompt: str, use_rag: bool = True) -> Dict[str, Any]:
+    # RAG处理：检索相关文档并增强prompt
+    if use_rag:
+        rag_result = await rag_service.process_query_with_rag(prompt)
+        enhanced_prompt = rag_result["enhanced_prompt"]
+        context_info = rag_result["context_info"]
+    else:
+        enhanced_prompt = prompt
+        context_info = {"has_context": False}
+
     # 添加用户消息到历史
-    user_message = HumanMessage(content=prompt)
+    user_message = HumanMessage(content=enhanced_prompt)
     conversation_history.append(user_message)
 
     # 计算输入token
@@ -60,6 +70,9 @@ async def process_prompt(prompt: str) -> Dict[str, Any]:
 
     return {
         "response": response.content,
+        "context_info": context_info,
+        "original_query": prompt,
+        "enhanced_prompt": enhanced_prompt if use_rag else None,
         "token_usage": {
             "input_tokens": cb.prompt_tokens if hasattr(cb, 'prompt_tokens') else input_tokens,
             "output_tokens": cb.completion_tokens if hasattr(cb, 'completion_tokens') else output_tokens,
@@ -67,14 +80,28 @@ async def process_prompt(prompt: str) -> Dict[str, Any]:
         }
     }
 
-# ✨ Streaming version (typewriter effect)
-async def stream_prompt(prompt: str):
+# ✨ Streaming version with RAG support
+async def stream_prompt(prompt: str, use_rag: bool = True):
     """
-    Stream LLM output chunk by chunk (token by token).
+    Stream LLM output chunk by chunk with RAG support.
     Used for StreamingResponse in FastAPI.
     """
+    # RAG处理：检索相关文档并增强prompt
+    if use_rag:
+        rag_result = await rag_service.process_query_with_rag(prompt)
+        enhanced_prompt = rag_result["enhanced_prompt"]
+        context_info = rag_result["context_info"]
+
+        # 发送上下文信息给前端（可选）
+        if context_info.get("has_context", False):
+            context_notice = f"[CONTEXT_FOUND]Found {context_info.get('chunk_count', 0)} relevant document chunks[/CONTEXT_FOUND]\n\n"
+            yield context_notice.encode("utf-8")
+    else:
+        enhanced_prompt = prompt
+        context_info = {"has_context": False}
+
     # 添加用户消息到历史
-    user_message = HumanMessage(content=prompt)
+    user_message = HumanMessage(content=enhanced_prompt)
     conversation_history.append(user_message)
 
     # 计算输入token
@@ -107,12 +134,15 @@ async def stream_prompt(prompt: str):
             output_tokens = count_tokens_for_messages([ai_message])
             print(f"计算的输出token: {output_tokens}")  # 调试信息
 
-            # 发送token统计信息
+            # 发送token统计信息和上下文信息
             import json
             token_stats = {
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
-                "total_tokens": input_tokens + output_tokens
+                "total_tokens": input_tokens + output_tokens,
+                "rag_used": use_rag,
+                "context_found": context_info.get("has_context", False),
+                "source_chunks": len(context_info.get("sources", []))
             }
             print(f"最终token统计: {token_stats}")  # 调试信息
 

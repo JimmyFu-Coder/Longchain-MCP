@@ -1,0 +1,134 @@
+.messageContainer {
+  display: flex;
+}
+
+.userMessage {
+  justify-content: flex-end;
+}
+
+.assistantMessage {
+  justify-content: flex-start;
+}
+
+.systemMessage {
+  justify-content: center;
+}
+
+.messageBubble {
+  max-width: 80%;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.userBubble {
+  background-color: #0891b2;
+  color: white;
+}
+
+.assistantBubble {
+  background-color: #404040;
+  color: #f5f5f5;
+}
+
+.systemBubble {
+  background-color: #1f2937;
+  color: #d1d5db;
+  border: 1px solid #374151;
+  max-width: 90%;
+}
+
+.messageHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.messageAuthor {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.messageTimestamp {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.messageContent {
+  font-size: 0.875rem;
+  line-height: 1.625;
+}
+
+.userContent {
+  white-space: pre-wrap;
+}
+
+.systemContent {
+  white-space: pre-wrap;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.assistantContent {
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  max-width: none;
+}
+
+.assistantContent h1,
+.assistantContent h2,
+.assistantContent h3,
+.assistantContent h4,
+.assistantContent h5,
+.assistantContent h6 {
+  margin: 1rem 0 0.5rem 0;
+  color: inherit;
+}
+
+.assistantContent p {
+  margin: 0.5rem 0;
+}
+
+.assistantContent code {
+  background-color: #525252;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.8em;
+}
+
+.assistantContent pre {
+  background-color: #525252;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.assistantContent ul,
+.assistantContent ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.tokenUsage {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #525252;
+  font-size: 0.75rem;
+  color: #a3a3a3;
+}
+
+.inputTokens {
+  color: #4ade80;
+}
+
+.outputTokens {
+  color: #60a5fa;
+  margin-left: 0.5rem;
+}
+
+.totalTokens {
+  color: #facc15;
+  margin-left: 0.5rem;
+}
