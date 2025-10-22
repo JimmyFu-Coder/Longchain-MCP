@@ -1,0 +1,97 @@
+# ==========================================
+# PyCharm / JetBrains IDE
+# ==========================================
+.idea/
+*.iml
+
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
+venv/
+env/
+.venv/
+.env/
+
+# 构建产物
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 单元测试 / 覆盖率
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# ==========================================
+# 环境变量与敏感信息
+# ==========================================
+# 例如 Azure OpenAI key / LangChain key
+.env
+.env.*
+secrets/
+*.key
+*.pem
+
+# ==========================================
+# Jupyter Notebook
+# ==========================================
+.ipynb_checkpoints
+jupyter_cache/
+*.nbconvert.ipynb
+
+# ==========================================
+# LangChain & LLM 相关缓存
+# ==========================================
+# LangChain callback / cache
+langchain.db
+langchain_cache/
+lc_cache/
+# 向量数据库（如 Chroma）
+chroma/
+chroma_db/
+vectorstore/
+# Embedding 结果缓存
+embeddings/
+# 日志
+logs/
+*.log
+
+# ==========================================
+# VSCode / 其他 IDE 可选
+# ==========================================
+.vscode/
+*.code-workspace
+
+# ==========================================
+# macOS / Linux 系统文件
+# ==========================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
