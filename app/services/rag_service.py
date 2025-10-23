@@ -1,33 +1,32 @@
 # app/services/rag_service.py
 from typing import List, Dict, Any, Optional
-from app.services.vector_store import vector_store
-from app.services.document_service import embedding_service
+from app.services.azure_search_service import azure_search_service
 
 class RAGService:
     """RAG (Retrieval-Augmented Generation) 服务"""
 
     def __init__(self,
                  max_context_chunks: int = 5,
-                 min_similarity: float = 0.3,
-                 max_context_length: int = 4000):
+                 min_similarity: float = 0.7,
+                 max_context_length: int = 4000,
+                 use_semantic_search: bool = True):
         self.max_context_chunks = max_context_chunks
         self.min_similarity = min_similarity
         self.max_context_length = max_context_length
+        self.use_semantic_search = use_semantic_search
 
     async def retrieve_relevant_context(self, query: str) -> Dict[str, Any]:
         """检索与查询相关的文档上下文"""
         try:
-            # 1. 生成查询的embedding
-            query_embedding = await embedding_service.generate_single_embedding(query)
-
-            # 2. 搜索相似的chunks
-            similar_chunks = vector_store.search_similar_chunks(
-                query_embedding=query_embedding,
+            # 使用 Azure AI Search 搜索相关文档
+            search_results = await azure_search_service.search_documents(
+                query=query,
                 top_k=self.max_context_chunks,
-                min_similarity=self.min_similarity
+                min_score=self.min_similarity,
+                use_semantic_search=self.use_semantic_search
             )
 
-            if not similar_chunks:
+            if not search_results:
                 return {
                     "has_context": False,
                     "context": "",
@@ -35,34 +34,37 @@ class RAGService:
                     "message": "No relevant documents found"
                 }
 
-            # 3. 构建上下文文本
+            # 构建上下文文本
             context_parts = []
             sources = []
             total_length = 0
 
-            for i, chunk in enumerate(similar_chunks):
-                chunk_text = chunk["text"]
+            for i, doc in enumerate(search_results):
+                doc_content = doc["content"]
 
                 # 检查是否超过最大长度限制
-                if total_length + len(chunk_text) > self.max_context_length:
-                    # 截断最后一个chunk
+                if total_length + len(doc_content) > self.max_context_length:
+                    # 截断最后一个文档
                     remaining_length = self.max_context_length - total_length
                     if remaining_length > 100:  # 至少保留100个字符
-                        chunk_text = chunk_text[:remaining_length] + "..."
-                        context_parts.append(f"Document Chunk {i+1} (similarity: {chunk['similarity']:.3f}):\n{chunk_text}")
+                        doc_content = doc_content[:remaining_length] + "..."
+                        context_parts.append(f"Document Chunk {i+1} (score: {doc['similarity']:.3f}):\n{doc_content}")
                     break
 
-                context_parts.append(f"Document Chunk {i+1} (similarity: {chunk['similarity']:.3f}):\n{chunk_text}")
-                total_length += len(chunk_text)
+                context_parts.append(f"Document Chunk {i+1} (score: {doc['similarity']:.3f}):\n{doc_content}")
+                total_length += len(doc_content)
 
                 # 记录来源信息
-                file_info = chunk.get("file_info", {})
+                metadata = doc.get("metadata", {})
                 source_info = {
-                    "file_path": chunk["file_path"],
-                    "original_name": file_info.get("original_name", "Unknown file"),
-                    "chunk_index": chunk["index"],
-                    "similarity": chunk["similarity"],
-                    "quality_score": chunk.get("quality_score", 0.0)
+                    "file_path": doc["file_path"],
+                    "title": doc["title"],
+                    "chunk_index": doc["chunk_index"],
+                    "similarity": doc["similarity"],
+                    "quality_score": doc["quality_score"],
+                    "metadata": metadata,
+                    "captions": doc.get("captions", []),
+                    "answers": doc.get("answers", [])
                 }
                 sources.append(source_info)
 
@@ -72,8 +74,9 @@ class RAGService:
                 "has_context": True,
                 "context": context_text,
                 "sources": sources,
-                "chunk_count": len(similar_chunks),
-                "total_context_length": len(context_text)
+                "chunk_count": len(search_results),
+                "total_context_length": len(context_text),
+                "semantic_search_used": self.use_semantic_search
             }
 
         except Exception as e:
@@ -99,11 +102,13 @@ Note: No relevant document content was found to answer this question. Please ans
         sources = context_info["sources"]
 
         source_list = "\n".join([
-            f"- {source['original_name']} (chunk {source['chunk_index']}, similarity: {source['similarity']:.3f})"
+            f"- {source['title'] or source['file_path']} (chunk {source['chunk_index']}, score: {source['similarity']:.3f})"
             for source in sources
         ])
 
-        prompt = f"""Answer the user's question based on the following document content.
+        semantic_info = " (Enhanced with Azure AI semantic search)" if context_info.get("semantic_search_used", False) else ""
+
+        prompt = f"""Answer the user's question based on the following document content{semantic_info}.
 
 Relevant document chunks:
 {context}

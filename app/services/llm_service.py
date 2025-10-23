@@ -4,8 +4,10 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.callbacks import get_openai_callback
 from app.core.config import settings
 from app.services.rag_service import rag_service
+from app.services.azure_search_service import azure_search_service
 from typing import List, Dict, Any
 import tiktoken
+import json
 
 # Initialize Azure LLM client
 llm = AzureChatOpenAI(
@@ -94,7 +96,8 @@ async def stream_prompt(prompt: str, use_rag: bool = True):
 
         # 发送上下文信息给前端（可选）
         if context_info.get("has_context", False):
-            context_notice = f"[CONTEXT_FOUND]Found {context_info.get('chunk_count', 0)} relevant document chunks[/CONTEXT_FOUND]\n\n"
+            semantic_info = " (with semantic search)" if context_info.get("semantic_search_used", False) else ""
+            context_notice = f"[CONTEXT_FOUND]Found {context_info.get('chunk_count', 0)} relevant document chunks{semantic_info}[/CONTEXT_FOUND]\n\n"
             yield context_notice.encode("utf-8")
     else:
         enhanced_prompt = prompt
@@ -135,14 +138,15 @@ async def stream_prompt(prompt: str, use_rag: bool = True):
             print(f"计算的输出token: {output_tokens}")  # 调试信息
 
             # 发送token统计信息和上下文信息
-            import json
             token_stats = {
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
                 "total_tokens": input_tokens + output_tokens,
                 "rag_used": use_rag,
                 "context_found": context_info.get("has_context", False),
-                "source_chunks": len(context_info.get("sources", []))
+                "source_chunks": len(context_info.get("sources", [])),
+                "semantic_search_used": context_info.get("semantic_search_used", False),
+                "azure_search_powered": True
             }
             print(f"最终token统计: {token_stats}")  # 调试信息
 
@@ -182,12 +186,13 @@ async def stream_prompt_with_stats(prompt: str) -> Dict[str, Any]:
                 usage_info = chunk.usage_metadata
 
         # 流式完成后，添加AI回复到历史
+        ai_message = None
         if full_response:
             ai_message = AIMessage(content=full_response)
             conversation_history.append(ai_message)
 
         # 计算输出token
-        output_tokens = count_tokens_for_messages([ai_message]) if full_response else 0
+        output_tokens = count_tokens_for_messages([ai_message]) if ai_message else 0
 
         return {
             "response": full_response,
