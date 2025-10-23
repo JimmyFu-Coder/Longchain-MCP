@@ -43,10 +43,10 @@ class AzureSearchService:
             credential=AzureKeyCredential(settings.azure_search_key)
         )
 
-        # Azure OpenAI Embedding 客户端
+        # Azure OpenAI Embedding 客户端 (使用独立的embedding服务)
         self.embedding_client = AzureOpenAIEmbeddings(
-            api_key=settings.azure_openai_api_key,
-            azure_endpoint=settings.azure_openai_endpoint,
+            api_key=settings.azure_openai_embedding_api_key,
+            azure_endpoint=settings.azure_openai_embedding_endpoint,
             deployment=settings.azure_openai_embedding_deployment,
             api_version=settings.azure_openai_embedding_api_version,
             chunk_size=1000

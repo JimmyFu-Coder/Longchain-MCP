@@ -136,5 +136,5 @@ Sources:
             "original_query": user_query
         }
 
-# 创建全局RAG服务实例
-rag_service = RAGService()
+# 创建全局RAG服务实例 (暂时关闭语义搜索，因为服务不支持)
+rag_service = RAGService(use_semantic_search=False)

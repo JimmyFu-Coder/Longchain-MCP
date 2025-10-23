@@ -9,8 +9,10 @@ class Settings(BaseSettings):
     azure_api_version: str
 
     # Azure OpenAI Embedding 配置
-    azure_openai_embedding_deployment: str = "text-embedding-ada-002"
-    azure_openai_embedding_api_version: str = "2023-05-15"
+    azure_openai_embedding_endpoint: str = ""
+    azure_openai_embedding_api_key: str = ""
+    azure_openai_embedding_deployment: str = "text-embedding-3-small"
+    azure_openai_embedding_api_version: str = "2024-02-01"
 
     # Azure AI Search 配置
     azure_search_endpoint: str
@@ -19,7 +21,7 @@ class Settings(BaseSettings):
     azure_search_api_version: str = "2023-11-01"
 
     # 向量配置
-    embedding_dimension: int = 1536  # text-embedding-ada-002 的维度
+    embedding_dimension: int = 1536  # text-embedding-3-small 的维度
 
     class Config:
         env_file = ".env"
