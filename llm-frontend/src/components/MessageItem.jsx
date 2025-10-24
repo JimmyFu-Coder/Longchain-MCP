@@ -1,6 +1,65 @@
 import { marked } from "marked";
 import styles from './MessageItem.module.css';
 
+function formatToolResult(content) {
+  const toolCallPattern = /\[TOOL_CALLS_COMPLETE]\[TOOL_RESULT]({.*?})\[\/TOOL_RESULT]/s;
+  const match = content.match(toolCallPattern);
+
+  if (!match) return content;
+
+  try {
+    const result = JSON.parse(match[1]);
+
+    if (result.success && result.data && result.data.content && result.data.content[0]) {
+      const innerData = JSON.parse(result.data.content[0].text);
+
+      // Handle database query results
+      if (innerData.data && innerData.data.rows && Array.isArray(innerData.data.rows)) {
+        const rows = innerData.data.rows;
+        const rowCount = innerData.rowCount || rows.length;
+        const executionTime = innerData.executionTime || 'N/A';
+
+        let formatted = `**Query Result (${rowCount} rows, execution time: ${executionTime})**\n\n`;
+
+        if (rows.length > 0) {
+          const headers = Object.keys(rows[0]);
+          formatted += '| ' + headers.join(' | ') + ' |\n';
+          formatted += '| ' + headers.map(() => '---').join(' | ') + ' |\n';
+
+          rows.forEach(row => {
+            formatted += '| ' + headers.map(header => row[header] || '').join(' | ') + ' |\n';
+          });
+        }
+
+        return content.replace(toolCallPattern, formatted);
+      }
+
+      // Handle other structured data
+      if (innerData.success !== undefined) {
+        let formatted = `**Tool Result**\n\n`;
+        formatted += '```json\n';
+        formatted += JSON.stringify(innerData, null, 2);
+        formatted += '\n```';
+
+        return content.replace(toolCallPattern, formatted);
+      }
+    }
+
+    // Fallback: format as JSON
+    let formatted = `**Tool Result**\n\n`;
+    formatted += '```json\n';
+    formatted += JSON.stringify(result, null, 2);
+    formatted += '\n```';
+
+    return content.replace(toolCallPattern, formatted);
+
+  } catch (e) {
+    console.error('Error parsing tool result:', e);
+    // If parsing fails, just remove the tool wrapper and show raw content
+    return content.replace(toolCallPattern, match[1]);
+  }
+}
+
 function MessageItem({ message }) {
   const isUser = message.type === "user";
   const isSystem = message.type === "system";
@@ -33,7 +92,7 @@ function MessageItem({ message }) {
           ) : (
             <div
               className={styles.assistantContent}
-              dangerouslySetInnerHTML={{ __html: marked(message.content) }}
+              dangerouslySetInnerHTML={{ __html: marked(formatToolResult(message.content)) }}
             />
           )}
         </div>
